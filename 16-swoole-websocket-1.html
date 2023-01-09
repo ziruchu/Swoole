@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+</head>
+<body>
+
+	<script>
+		// 实例 websocket 对象
+		let ws = new WebSocket('ws://127.0.0.1:9501');
+
+		// 连接服务器
+		ws.onopen = function(event) {
+			ws.send('client info');
+			console.log(event.data)
+		}
+
+		// 接收服务端消息
+		ws.onmessage = function (event) {
+			// 接收服务端发送的数据
+			let data = event.data
+			console.log(event)
+		}
+
+		// 关闭连接
+		ws.onclose = function(event) {
+			console.log('关闭客户端链接');
+		}
+
+	</script>
+	
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>简版聊天室</title>
+</head>
+<body>
+	<div>
+		<textarea name="content" id="content" cols="30" rows="10"></textarea>
+		<button onclick="send();">发送</button>
+	</div>
+	<div>
+		<ul id="messageList"></ul>
+	</div>
+
+
+	<script>
+		let ws = new WebSocket('ws://127.0.0.1:9501');
+
+		ws.onopen = function () {
+			ws.send('my name is WebSocket');
+		}
+
+		ws.onmessage = function (event) {
+			let data     = event.data;
+			let ul       = document.getElementById('messageList');
+			let li       = document.createElement('li');
+			li.innerHTML = data;
+			ul.appendChild(li);
+		}
+
+		ws.onclose = function (event) {
+			console.log('客户端关闭连接:' . event);
+		}
+
+		function send() {
+			let obj     = document.getElementById('content');
+			let content = obj.value;
+			ws.send(content)
+			obj.value   = '';
+		}
+
+	</script>
+</body>
+</html>

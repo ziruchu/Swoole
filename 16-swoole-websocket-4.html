@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>重连机制</title>
+</head>
+<body>
+	<div>
+		<textarea name="content" id="content" cols="30" rows="10"></textarea>
+		<button onclick="send();">发送</button>
+	</div>
+	<div>
+		<ul id="messageList"></ul>
+	</div>
+
+
+	<script>
+	
+		// websocket 实例
+		let ws;
+		// 避免重复连接
+		let lockReconnect = false;
+		let url = "ws://127.0.0.1:9501";
+
+
+		// 创建 websocket 实例
+		function createWebSocket(url)
+		{
+			try {
+				ws = new WebSocket(url);
+				initEventHandle();
+			} catch (e) {
+				// 连接失败，重新连接
+				reconnect(url);
+			}
+		}
+
+
+		function initEventHandle()
+		{
+			ws.onclose = function () {
+				reconnect(url);
+			}
+			ws.onerror = function () {
+				reconnect(url);
+			}
+			ws.onopen = function () {
+				// 心跳检测重置
+				heartCheck.reset().start();
+			}
+			ws.onmessage = function (event) {
+				let data     = event.data;
+				let ul       = document.getElementById('messageList');
+				let li       = document.createElement('li');
+				li.innerHTML = data;
+				ul.appendChild(li);
+
+				heartCheck.reset().start();
+			}
+		}
+
+		function reconnect(url)
+		{
+			if (lockReconnect) {
+				return;
+			}
+
+			lockReconnect = true;
+
+			setTimeout(function () {
+				createWebSocket(url);
+				lockReconnect = false;
+			}, 2000);
+		}
+
+
+		let heartCheck = {
+			timeout: 60000,
+			timeoutObj: null,
+			serverTimeoutObj: null,
+			reset: function () {
+				clearTimeout(this.timeoutObj);
+				clearTimeout(this.serverTimeoutObj);
+				return this;
+			},
+			start: function () {
+				let self = this;
+				this.timeoutObj = setTimeout(function () {
+					// 发送心跳检测
+					// 服务端收到后会返回一个心跳消息
+					ws.send('');
+					self.serverTimeoutObj = setTimeout(function () {
+						ws.close();
+					}, self.timeout);
+				}, this.timeout);
+			}
+
+		};
+
+
+		createWebSocket(url);
+
+		function send() {
+			let obj     = document.getElementById('content');
+			let content = obj.value;
+			ws.send(content)
+			obj.value   = '';
+		}
+
+	</script>
+</body>
+</html>
